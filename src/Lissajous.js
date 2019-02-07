@@ -1,9 +1,11 @@
 let canvas;
-let LENGTH = 7;
-let gridScalar = 70;
+let slider;
+let LENGTH = 10;
 let DIAM = 50
-let baseX = 50;
-let baseY = 50;
+let MARGIN = 10;
+let gridScalar = DIAM+MARGIN;
+let baseX = DIAM/2+MARGIN;
+let baseY = DIAM/2+MARGIN;
 let circlesX = [];
 let circlesY = [];
 let dotsX = [];
@@ -11,39 +13,38 @@ let dotsY = [];
 let dottedX = [];
 let dottedY = [];
 let xDots = [];
-let colors = ['#EEAAAA', '#EEC5AA', '#EEE0AA', '#C5EEAA', '#AAEEC5', '#AAEEE0', '#AAE0EE']; //#EEAAAA to #AAAAEE
+let colors = ['#EEAAAA', '#EEC5AA', '#EEE0AA', '#E0EEAA', '#C5EEAA', '#AAEEAA', '#AAEEC5', '#AAEEE0', '#AAE0EE', '#AAC5EE']; //#EEAAAA to #AAAAEE
 function setup() {
-  canvas = createCanvas(500, 500);
-  background(100);
-
-
-  for (let i = 0; i < 7; i++) {
-    circlesX.push(new Circle(baseX+gridScalar*(i+1), baseY, DIAM, colors[i]));
+  slider = createSlider(0,10,0);
+  canvas = createCanvas((DIAM+MARGIN) * (10 + 1) + 2*MARGIN + slider.width, (DIAM+MARGIN) * (10 + 1) + MARGIN);
+  slider.position(canvas.height, canvas.height - slider.height*2);
+  for (let i = 0; i < LENGTH; i++) {
+    circlesX.push(new Circle(baseX+gridScalar*(i+1), baseY, DIAM, colors[i%10]));
   }
-  for (let i = 0; i < 7; i++) {
-    circlesY.push(new Circle(baseX, baseY+gridScalar*(i+1), DIAM, colors[i]));
+  for (let i = 0; i < LENGTH; i++) {
+    circlesY.push(new Circle(baseX, baseY+gridScalar*(i+1), DIAM, colors[i%10]));
   }
 
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < LENGTH; i++) {
     dotsX.push(new Dot(baseX+gridScalar*(i+1), baseY, DIAM));
   }
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < LENGTH; i++) {
     dotsY.push(new Dot(baseX, baseY+gridScalar*(i+1), DIAM));
   }
 
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < LENGTH; i++) {
     dottedX.push(new DottedLine(dotsX[i].getX(), dotsX[i].getY(), canvas.height));
   }
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < LENGTH; i++) {
     dottedY.push(new DottedLine(dotsY[i].getX(), dotsY[i].getY(), canvas.width));
   }
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < LENGTH; i++) {
     let row = [];
-    for (let j = 0; j < 7; j++) {
-      row.push(new xDot(dotsX[i].getX(), dotsY[j].getY(), averageColor(colors[i],colors[j]),[]));
+    for (let j = 0; j < LENGTH; j++) {
+      row.push(new xDot(dotsX[i].getX(), dotsY[j].getY(), averageColor(colors[i%10],colors[j%10]),[]));
     }
     xDots.push(row);
   }
@@ -51,30 +52,41 @@ function setup() {
 
 
 function draw() {
-   background(100);
+  background(100);
+  stroke(255);
+  textSize(50);
+  fill(100)
+  strokeWeight(6);
+  text(slider.value(), canvas.height + 5, canvas.height-50)
 
   for (let i = 0; i < LENGTH; i++) {
-    circlesX[i].display();
-    circlesY[i].display();
-  }
-  for (let i = 0; i < LENGTH; i++) {
-    dotsX[i].move((i+2)/2);
-    dotsX[i].display();
-
-    dotsY[i].move((i+2)/2);
-    dotsY[i].display();
-
-
+    dotsX[i].move((i+1)/2);
+    dotsY[i].move((i+1)/2);
     dottedX[i].move(dotsX[i].getX(), dotsX[i].getY());
-    dottedX[i].displayX();
     dottedY[i].move(dotsY[i].getX(), dotsY[i].getY());
-    dottedY[i].displayY();
 
     for (let j = 0; j < LENGTH; j++) {
-      xDots[i][j].display();
       xDots[i][j].move(dotsX[i].getX(), dotsY[j].getY());
     }
   }
+  for (let i = 0; i < slider.value(); i++) {
+    circlesX[i].display();
+    circlesY[i].display();
+  }
+
+  for (let i = 0; i < slider.value(); i++) {
+    dotsX[i].display();
+    dotsY[i].display();
+    dottedX[i].displayX();
+    dottedY[i].displayY();
+
+    for (let j = 0; j < slider.value(); j++) {
+      xDots[i][j].drawTail();
+      xDots[i][j].display();
+    }
+  }
+
+
 }
 
 class Circle {
@@ -97,7 +109,7 @@ class Circle {
   display() {
     strokeWeight(2);
     stroke(color(this.c))
-      fill(100);
+    fill(100);
     ellipse(this.x, this.y, this.d, this.d);
   }
 }
@@ -117,7 +129,7 @@ class Dot {
   }
 
   display() {
-    strokeWeight(6);
+    strokeWeight(7);
     stroke(255);
     point((this.x+(this.d/2) * cos(radians(this.angle))), (this.y+(this.d/2) * sin(radians(this.angle))));
   }
@@ -136,17 +148,22 @@ class xDot {
   }
 
   display() {
-    strokeWeight(1);
-    stroke(color(this.c))
+    strokeWeight(4);
+    stroke(255)
     point(this.x, this.y);
+
+  }
+  drawTail(){
+    for(let i = 0 ; i < this.h.length; i++){
+      strokeWeight(3);
+      stroke(color(this.c))
+      point(this.h[i].x, this.h[i].y);
+    }
   }
   move(x, y) {
-    if(this.h.length == 700){
+    this.h.push(createVector(this.x,this.y));
+    if(this.h.length > 720){
       this.h = [];
-    }
-    this.h.push({x: this.x, y: this.y});
-    for(let i = 0 ; i < this.h.length; i++){
-      point(this.h[i].x, this.h[i].y);
     }
     this.x = x;
     this.y = y;
@@ -182,10 +199,8 @@ class DottedLine {
   move(p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
-    point(this.p1, this.p2)
   }
 }
-
 function averageColor(color1,color2){
     var avg  = function(a,b){ return (a+b)/2; },
         t16  = function(c){ return parseInt((''+c).replace('#',''),16) },
